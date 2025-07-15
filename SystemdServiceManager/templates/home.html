@@ -1,0 +1,129 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <title>Systemd service manager</title>
+    <link rel="stylesheet" href="{% static '/css/styles.css' %}">
+    <style>
+        .body {
+            padding-left: 10px;
+        } 
+         
+        .circle {
+            height: 15px;
+            width: 15px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+        .green {
+            background-color: #4CAF50;
+        }
+        .red {
+            background-color: #f44336;
+        }
+    </style>
+</head>
+<body>
+    <div style="padding: 20px;">
+    <h4>Services</h4>
+    <input type="text" id="searchInput" placeholder="Search service...">
+    <table border="1" cellpadding="5" cellspacing="0" padding="10px">
+        <thead>
+            <tr>
+                <th>State</th>
+                <th>Name</th>
+                <th>Description</th>
+                <th>Start</th>
+                <th>Stop</th>
+                <th>Restart</th>
+                <th>Enable</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for service in services %}
+            <tr>
+                <td>
+                    <span class="circle {% if service.state == 'active' %}green{% else %}red{% endif %}"></span>
+                </td>
+                <td>{{ service.name }}</td>
+                <td>{{ service.description }}</td>
+                <td>
+                <form method="post" action="{% url 'start_service' %}" style="display:inline;">
+                    {% csrf_token %}
+                    <input type="hidden" name="service_name" value="{{ service.name }}">
+                    <button class="action-btn start-btn">Start</button>
+                </form>    
+                </td>
+                <td>
+                    <form method="post" action="{% url 'stop_service' %}" style="display:inline;">
+                        {% csrf_token %}
+                        <input type="hidden" name="service_name" value="{{ service.name }}">
+                        <button class="action-btn start-btn">Stop</button>
+                    </form>    
+                </td>
+                <td>
+                    <form method="post" action="{% url 'restart_service' %}" style="display:inline;">
+                        {% csrf_token %}
+                        <input type="hidden" name="service_name" value="{{ service.name }}">
+                        <button class="action-btn stop-btn">Restart</button>
+                    </form>    
+                </td>
+                <td>
+                    <form method="post" action="{% url 'enable_service' %}" style="display:inline;">
+                        {% csrf_token %}
+                        <input type="checkbox" data-service="{{ service.name }}" onchange="toggleServiceEnable(this)"
+                        {% if service.enabled == 'enabled' %}checked{% endif %}>
+                
+                    </form>    
+                </td>
+            </tr>
+        {% empty %}
+            <tr><td colspan="3">No services</td>
+               
+            </tr>
+
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+<script>
+    document.getElementById('searchInput').addEventListener('keyup', function() {
+        const filter = this.value.toLowerCase();
+        const rows = document.querySelectorAll('table tbody tr');
+    
+        rows.forEach(row => {
+            const nameCell = row.querySelector('td:nth-child(2)');
+            if (nameCell) {
+                const text = nameCell.textContent.toLowerCase();
+                row.style.display = text.includes(filter) ? '' : 'none';
+            }
+        });
+    });
+    </script>
+<script>
+    function toggleServiceEnable(checkbox) {
+        const serviceName = checkbox.dataset.service;
+        const url = checkbox.checked ? "{% url 'enable_service' %}" : "{% url 'disable_service' %}";
+    
+        const formData = new FormData();
+        formData.append('service_name', serviceName);
+        formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+    
+        fetch(url, {
+            method: 'POST',
+            body: formData
+        }).then(response => {
+            if (!response.ok) {
+                alert("Error on change service state.");
+                checkbox.checked = !checkbox.checked;  // Revertir el cambio
+            }
+        }).catch(() => {
+            alert("Network error.");
+            checkbox.checked = !checkbox.checked;
+        });
+    }
+    </script>    
+</body>
+</html>

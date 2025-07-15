@@ -1,0 +1,9 @@
+[Unit]
+Description=SystemdServiceManager
+After=network.target
+
+[Service]
+ExecStart=python manage.py runserver
+WorkingDirectory=/home/pablo/projects/SystemdServiceManager
+Restart=always
+User=pablo
