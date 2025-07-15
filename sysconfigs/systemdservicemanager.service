@@ -3,7 +3,7 @@ Description=SystemdServiceManager
 After=network.target
 
 [Service]
-ExecStart=python manage.py runserver
+ExecStart=/home/pablo/projects/SystemdServiceManager/manage.py manage.py runserver
 WorkingDirectory=/home/pablo/projects/SystemdServiceManager
 Restart=always
-User=pablo
+User=systemdservicemanager
